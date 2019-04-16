@@ -24,7 +24,7 @@ LABEL keywords="debian, ${tool}, aligner, genomics, bioinformatics"
 LABEL buildAuthor="Stuart R. Jefferys <srj@unc.edu>"
 LABEL buildMaintainer="Stuart R. Jefferys <srj@unc.edu>"
 LABEL buildVendor="UNC - Lineberger"
-LABEL buildSource="https://github.com/jefferys/Dockers/${tool}"
+LABEL buildSource="https://github.com/jefferys/Dockers/ToolDockers/${tool}"
 LABEL buildLicense="SPDX:MIT"
 LABEL buildLicenseFile="https://github.com/jefferys/Dockers/LICENSE"
 
