@@ -7,8 +7,8 @@ imageCreated="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 read buildVersion < "../../VERSION"
 
 context="."
-name="bowtie2"
-toolVersion="2.3.5"
+name="bioconductor"
+toolVersion="3.8"
 domain="jefferys"
 
 fullName="${domain}/${name}"
