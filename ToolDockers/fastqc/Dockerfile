@@ -20,7 +20,7 @@ LABEL org.opencontainers.image.vendor="UNC - Lineberger"
 LABEL org.opencontainers.image.licenses="${toolLicense}"
 LABEL org.opencontainers.image.ref.name="${tool}:${toolVersion}_${buildVersion}"
 LABEL org.opencontainers.image.title="${brief}"
-LABEL org.opencontainers.image.description="A container for running the fastqc quality control analysis program in batch mode. Does not work interactively. Generates an html report with images. Run `fastqc help` for instructions."
+LABEL org.opencontainers.image.description="A container for running the fastqc quality control analysis program in batch mode. Does not work interactively. Generates an html report with images and a text file. Run `fastqc help` for instructions."
 
 # https://github.com/BioContainers/specs/blob/master/container-specs.md
 LABEL base_image="debian:9.8"
