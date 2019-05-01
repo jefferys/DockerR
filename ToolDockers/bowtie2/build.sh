@@ -9,6 +9,7 @@ read buildVersion < "../../VERSION"
 context="."
 name="bowtie2"
 toolVersion="2.3.5"
+samtoolsVersion="1.9"
 domain="jefferys"
 
 fullName="${domain}/${name}"
