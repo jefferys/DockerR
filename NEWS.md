@@ -1,5 +1,8 @@
 # NEWS
 
+* ToolDockers added:
+    + ataqv - 1.0.0, base debian:9.8
+    
 # 0.0.2
 
 * Added NEWS.md
