@@ -2,6 +2,9 @@
 
 * ToolDockers added:
     + ataqv - 1.0.0, base debian:9.8
+* BaseDocker updated:
+    + bioconductor: added explicity openssl and ca-certificates libraries.
+    + ToolDockers affected: csaw.
     
 # 0.0.2
 

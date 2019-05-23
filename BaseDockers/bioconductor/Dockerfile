@@ -35,12 +35,14 @@ LABEL maintainer="Stuart R. Jefferys <srj@unc.edu>"
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     bzip2 \
+    ca-certificates \
     curl \
     libbz2-dev \
     libcurl4-openssl-dev \
     libssl-dev \
     libxml2-dev \
     liblzma-dev \
+    openssl \
     pkg-config \
     zlib1g-dev
 
