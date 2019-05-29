@@ -2,6 +2,7 @@
 
 * ToolDockers added:
     + ataqv - 1.0.0, base debian:9.8
+    + trimmomatic - 0.39
 * BaseDocker updated:
     + bioconductor: added explicity openssl and ca-certificates libraries.
     + ToolDockers affected: csaw.
