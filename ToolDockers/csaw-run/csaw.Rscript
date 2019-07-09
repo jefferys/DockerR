@@ -1,0 +1,220 @@
+#!/usr/bin/env Rscript
+
+#### Init script ####
+
+suppressPackageStartupMessages({
+    library("csaw")
+    library("optparse")
+    library("checkmate") 
+})
+
+#### Parse CLI ####
+
+optionRules <- list(
+    make_option( "--bam",
+        default = NULL, type = "character", metavar = "FILE[,FILE[,...]]",
+        help = paste0(
+            "[REQUIRED] Bam file or files to count.\n",
+            "\t\tNo spaces if multiple *.bam files.\n",
+            "\t\tMust have *.bam.bai index files of same name in same location.\n",
+            "\t\tUse --bamDir for convienience if paths share (some) common parent dir."
+        )
+    ),
+    make_option( "--bamDir",
+        default = NULL, type = "character", metavar = "DIR",
+        help = paste0(
+            "Base dir for bam files. If specified, must exist.\n",
+            "\t\tWill be prefixed to every bam specified in '--bam'."
+        )        
+    ),
+    make_option( "--outDir",
+         default = "./", type = "character", metavar = "DIR",
+         help = paste0(
+             "Base dir for outputing results to. Will be created if\n",
+             "\t\tnot already existing. Defaults to the current dir '.\'."
+         )        
+    ),
+    make_option( "--chr",
+        default = NULL, type = "character", metavar = "CHR[,CHR[,...]]",
+         help = paste0(
+             "Only count these chromosomes. If specifed, others are ignored.\n",
+             "\t\tNo spaces if multiple chr are listed."
+         )
+    ),
+    make_option( "--width",
+        default= 73L, type = "integer", metavar= "INT",
+        help=paste0(
+            "Size of the window to use in counting.\n",
+            "\t\tDefault [73] is 1/2 a nucleosome."
+        )
+    ),
+    make_option( "--minCounts",
+        default= 10L, type = "integer", metavar= "INT",
+        help=paste0(
+             "Only keep windows with more than this many counts\n",
+             "\t\tUse 0 to keep even empty windows. Default [10]."
+         )
+    ),
+    make_option( "--maxFrag",
+         default= 2000L, type = "integer", metavar= "INT",
+         help=paste0(
+             "Only keep fragments this length or smaller. Default [2000].\n",
+             "\t\tMost libraries are size limited, so these are not\n",
+             "\t\tlong open regions but alignment errors or genome variations."
+         )
+    ),
+    make_option( "--minQual",
+        default= 10L, type = "integer", metavar= "INT",
+        help=paste0(
+            "Only keep *reads* with mapping quality this high or greater.\n",
+            "\t\t[Default 6]. Both ends of a pair must be kept to keep the fragment."
+        )
+    ),
+    make_option( "--manualBin",
+                 default= FALSE, action="store_true",
+                 help=paste0(
+                     "Manually define bins. By default this is FALSE\n",
+                     "\t\tmeaning --mincounts is set to 1 if not 0."
+                 )
+    )
+)
+
+optionParser <- OptionParser(
+    option_list = optionRules,
+    description = paste0(
+        "Run csaw on paired end aligned atac data.",
+        " Counts fragments (pairs + inserts) that overlap windows",
+        " tiled across the reference. Requires one or more bam files",
+        " specified as --bam. Outputs readParam.RDS, windowCounts.RDS,",
+        " windowCounts.tsv."
+    )
+)
+
+opt <- parse_args( optionParser )
+
+#### Validate Options ####
+
+validate <- function(opt) {
+    
+    # --bamDir (constrains --bam)
+    if (! is.null(opt$bamDir)) {
+        c <- checkmate::assertDirectoryExists(
+            opt$bamDir, access = "r", .var.name = "--bamDir"
+        )
+    }
+    
+    # --bam (constrained by --bamDir)
+    if (is.null(opt$bam)) {
+        stop( "Must specifiy one or more '--bam' files to count.")
+    }
+    else {
+        opt$bam <- strsplit( opt$bam, split= ",", fixed= TRUE)[[1]]
+        opt$bam <- checkmate::assertCharacter(
+            opt$bam, min.chars = 1, any.missing= FALSE, min.len= 1,
+            unique = TRUE, .var.name = "--bam")
+        if (! is.null(opt$bamDir)) {
+            opt$bam <- paste0( opt$bamDir)
+        }
+        opt$bam <- sapply( opt$bam, FUN = checkmate::assertFileExists,
+                           access = "r", extension= "bam", .var.name= "--bam" )
+        sapply( paste0( opt$bam, ".bai" ), FUN = checkmate::assertFileExists,
+                           access = "r", extension= "bai", .var.name= "--bam index file" )
+    }
+
+    # --outDir
+    opt$outDir <- checkmate::assertString(
+        opt$outDir, min.chars = 1, .var.name = "--outDir" )
+    if ( ! dir.exists( opt$outDir )) {
+        dir.create( opt$outDir, recursive=TRUE )
+    }
+    checkmate::assertDirectoryExists( opt$outDir, access="w", .var.name= "--outDir" )
+    
+    # --chr
+    if (! is.null(opt$chr)) {
+        opt$chr <- strsplit( opt$chr, split= ",", fixed= TRUE)[[1]]
+        opt$chr <- checkmate::assertCharacter(
+            opt$chr, min.chars = 1, any.missing= FALSE, min.len= 1,
+            unique = TRUE, .var.name = "--chr" )
+    }
+
+    # --width
+    opt$width <- checkmate::assertInt(
+        opt$width, lower = 1, .var.name = "--width" )
+
+    # --maxFrag
+    opt$maxFrag <- checkmate::assertInt(
+        opt$maxFrag, lower = 1, .var.name = "--maxFrag" )
+
+    # --minQual
+    opt$minQual <- checkmate::assertInt(
+        opt$minQual, lower = 0, .var.name = "--minQual" )
+    
+    # --minCounts (constrained by manualBin)
+    opt$minCounts <- checkmate::assertInt(
+        opt$minCounts, lower = 0, .var.name = "--minCounts" )
+    
+    # --manualBin (constrains --minCounts)
+    if( ! opt$manualBin) {
+        if (opt$minCounts > 1) {
+            opt$minCounts <- 1
+            warning( "--minCounts set to 1 as --manualBin is FALSE." )
+        }
+    }
+
+    opt
+}
+
+opt <- validate(opt)
+
+#### Set up readParamObj ####
+
+
+# For AtacSeq, want to count only ends of fragment, can
+# only do that if treat as single end reads
+readParamObj <- readParam(
+    pe = "none",
+    max.frag = opt$maxFrag,
+    dedup = TRUE,
+    minq = opt$minQual,
+    forward = NA,
+    restrict = opt$chr
+)
+saveRDS( readParamObj, file.path( opt$outDir, "readParam.RDS" ))
+
+#### Do window counting ####
+
+# Only want to count the end cut-point, not the whole
+# length of the read or fragment, so using bin= TRUE. That means some other
+# parameters are ignored...
+countObj <- windowCounts(
+    opt$bam,
+    spacing = opt$width,
+    width = opt$width,
+    ext = 1,
+    shift = 0,
+    filter = opt$minCounts,
+    bin = ! opt$manualBin,
+    param = readParamObj
+)
+saveRDS(countObj, file.path( opt$outDir, "windowCounts.RDS" ))
+
+### Extract counted regions to a *.tsv file
+
+# Granges object describing regions counted
+bins <- rowRanges(countObj)
+
+df <- data.frame(
+    chr = as.character(seqnames(bins)),
+    start = as.integer(start(bins)),
+    end = as.integer(end(bins)),
+    counts = as.integer(assay(countObj)[, 1]),
+    stringsAsFactors = FALSE
+)
+
+write.table(
+    df,
+    file = file.path( opt$outDir, "windowCounts.tsv" ),
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+)

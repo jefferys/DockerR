@@ -3,6 +3,7 @@
 * ToolDockers added:
     + ataqv - 1.0.0, base debian:9.8
     + trimmomatic - 0.39
+    + csaw-run - 0.0.1 - Includes executable script "csaw.Rscript".
 * BaseDocker updated:
     + bioconductor: added explicity openssl and ca-certificates libraries.
     + ToolDockers affected: csaw.
