@@ -1,5 +1,8 @@
 # NEWS
 
+* BaseDockers added:
+    + bioconductor-reports - 3.8, base rocker/verse:3.5.3
+
 * ToolDockers added:
     + ataqv - 1.0.0, base debian:9.8
     + trimmomatic - 0.39
