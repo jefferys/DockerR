@@ -8,7 +8,7 @@ read buildVersion < "../../VERSION"
 
 context="."
 name="csaw-run"
-toolVersion="0.0.1"
+toolVersion="0.0.2"
 domain="jefferys"
 
 fullName="${domain}/${name}"

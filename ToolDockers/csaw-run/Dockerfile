@@ -1,11 +1,30 @@
-FROM jefferys/csaw:3.8_latest
+FROM jefferys/bioconductor-reports:3.8_latest
+
+
+
+RUN R -e 'BiocManager::install( "csaw", \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
+
+RUN R -e 'BiocManager::install( \
+    c( "checkmate", "openssl", "optparse", "statmod" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
+
+ADD csaw.Rscript /usr/local/bin/
+
+# At end as args breaks all following caching. Timestamp changesd every time...
 
 ARG buildVersion
 ARG imageCreated
 
-ARG toolVersion="0.0.1"
+ARG toolVersion="0.0.2"
 ARG toolSource="https://bioconductor.org/packages/release/bioc/html/csaw.html"
-ARG tool="csaw"
+ARG tool="csaw-run"
 ARG brief="${tool} - Running csaw from a command line script"
 ARG toolLicense="MIT"
 
@@ -22,7 +41,7 @@ LABEL org.opencontainers.image.title="${brief}"
 LABEL org.opencontainers.image.description="The Bioconductor csaw packages, executed via a wrapper script to run as a command line program, /usr/local/bin/csaw.Rscript"
 
 # https://github.com/BioContainers/specs/blob/master/container-specs.md
-LABEL base_image="jefferys/csaw:3.8_latest"
+LABEL base_image="jefferys/bioconductor-reports:3.8_latest"
 LABEL version="${buildVersion}"
 LABEL software.version="${toolVersion}"
 LABEL software="${tool}"
@@ -31,15 +50,3 @@ LABEL about.home="${toolSource}"
 LABEL about.license="${toolLicense}"
 LABEL about.tags="debian, bioconductor, csaw, chip-seq, fdr"
 LABEL maintainer="Stuart R. Jefferys <srj@unc.edu>"
-
-RUN R -e 'BiocManager::install( "checkmate", \
-    update= FALSE, \
-    ask= FALSE, \
-    version= "3.8" \
-)' && R -e 'BiocManager::install( "optparse", \
-    update= FALSE, \
-    ask= FALSE, \
-    version= "3.8" \
-)'
-
-ADD csaw.Rscript /usr/local/bin/
