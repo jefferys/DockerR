@@ -7,7 +7,7 @@ imageCreated="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 read buildVersion < "../../VERSION"
 
 context="."
-name="csaw-run"
+name="limma"
 toolVersion="3.8"
 domain="jefferys"
 
