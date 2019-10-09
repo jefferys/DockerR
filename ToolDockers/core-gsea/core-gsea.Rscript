@@ -1,0 +1,102 @@
+#!/usr/bin/env Rscript
+
+# core-gsea.Rscript
+
+# Parse command line
+args = commandArgs(trailingOnly=TRUE)
+expressionFile <- args[1]
+sampleFile <- args[2]
+geneSetsFile <- args[3]
+outDir <- args[4]
+seed <- args[5]
+set.seed(seed)
+
+# Defaults
+outDir <- file.path( outDir, "core-gsea" )
+outDataFile <- file.path( outDir, "data.rds" )
+outSummaryFile <- file.path( outDir, "geneSetSummary.tsv" )
+
+# Load expression data
+inExpression <- read.table( expressionFile, header= TRUE, sep= "\t",
+                            stringsAsFactors= FALSE)
+# Load sample data
+inSample <- read.table( sampleFile, header= TRUE, sep= "\t",
+                        stringsAsFactors= FALSE)
+ 
+# Load gene sets file.
+dat <- readLines( geneSetsFile )
+fields <- strsplit( dat, "\t", fixed= TRUE )
+names( fields ) <- sapply( fields, "[[", 1 )
+inGeneSets <- lapply( fields, function(x) { x[3:length(x)] } )
+rm( fields )
+
+## Experimental design
+groupings <- setNames( inSample$group, rownames( inSample ))
+
+## Run core method
+# expression: genes x samples expression matrix or data frame with row and
+#   column names
+# groupings: integer or logical vector, in same order as samples, identifying
+#   background/normal samples as FALSE or 0, and study samples as TRUE or 1.
+# geneSets: List of gene sets. Each element is named for the gene set and
+#   is a vector of gene names in that gene set.
+coreGsea <- function(expression, groupings, geneSets) {
+	expression <- as.matrix(expression)
+	groupings <- as.logical(groupings)
+	
+	hiMean <- function(geneSet, allGenesTStat) {
+		select <- names(allGenesTStat) %in% geneSet & allGenesTStat > 0
+	    sum( allGenesTStat[select], na.rm= TRUE ) / sqrt( sum( select, na.rm=TRUE ))
+	}
+	
+	LoMean <- function(geneSet, allGenesTStat) {
+		select <- names(allGenesTStat) %in% geneSet & allGenesTStat < 0
+	    sum( allGenesTStat[select],na.rm= TRUE ) / sqrt( sum( select, na.rm= TRUE ))
+	}
+	
+	tstats <- apply( expression, 1, function(x) {
+		t.test( x[ groupings ], x[ ! groupings ] )$statistic
+	})
+	
+	High <- sapply( geneSets, hiMean, tstats )
+	Low  <- sapply( geneSets, LoMean, tstats )
+	tog <- cbind( High, Low )
+	tog <- reshape2::melt(tog)
+	
+	absOrderIndex <- order( abs(tog$value), decreasing= TRUE, na.last= TRUE )
+	tog[ absOrderIndex, ]
+}
+
+raw <- coreGsea( inExpression, groupings, inGeneSets )
+
+
+## Output
+
+# Setup output dir
+if (! dir.exists(outDir)) {
+	dir.create( outDir, recursive= TRUE )
+}
+
+# Data file
+saveRDS( raw, file= outDataFile )
+
+score <- structure( raw$value, names=as.character(raw$Var1))
+score <- score[unique(names(score))]
+
+# Summary file
+resultDF <- data.frame(
+	rank= rank( -abs(score), ties= "min", na.last= TRUE ),
+	pvalue= rep.int( NA_real_, length( score ) ),
+	row.names= names(score), stringsAsFactors= FALSE
+)
+
+# Sort in geneList order and then rank to report ties in geneList name order.
+geneListOrder <- order( rownames( resultDF )) 
+resultDF <- resultDF[geneListOrder, ]
+rankOrder <- order( resultDF$rank )   # Stable sort by default
+resultDF <- resultDF[rankOrder, ]
+
+write.table( resultDF, file= outSummaryFile,
+			 quote=FALSE, sep="\t", na=""
+)
+
