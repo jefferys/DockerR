@@ -15,6 +15,27 @@ RUN R -e 'BiocManager::install( \
     version= "3.8" \
 )'
 
+RUN R -e 'BiocManager::install( \
+    c( "annotatr", "TxDb.Hsapiens.UCSC.hg38.knownGene", "org.Hs.eg.db" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
+
+RUN R -e 'BiocManager::install( \
+    c( "EnhancedVolcano" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
+
+RUN R -e 'BiocManager::install( \
+    c( "ChIPseeker" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
+
 ADD csaw.Rscript /usr/local/bin/
 
 # At end as args breaks all following caching. Timestamp changesd every time...
