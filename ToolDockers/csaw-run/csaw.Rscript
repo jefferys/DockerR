@@ -4,6 +4,7 @@
 
 suppressPackageStartupMessages({
     library("csaw")
+    library("rtracklayer") 
     library("optparse")
     library("checkmate") 
 })
@@ -76,6 +77,13 @@ optionRules <- list(
                      "Manually define bins. By default this is FALSE\n",
                      "\t\tmeaning --mincounts is set to 1 if not 0."
                  )
+    ),
+    make_option( "--blackList",
+         default = NULL, type = "character", metavar = "FILE",
+         help = paste0(
+             "Bed3 file giving regions not to count (blacklist regions).\n",
+             "\t\t[Everything is counted by default]."
+         )        
     )
 )
 
@@ -160,6 +168,12 @@ validate <- function(opt) {
             warning( "--minCounts set to 1 as --manualBin is FALSE." )
         }
     }
+    
+    # --blackList
+    if (! is.null(opt$blackList)) {
+        opt$chr <- checkmate::assertFileExists(
+            opt$blackList, .access="r", .var.name= "--outDir" )
+    }
 
     opt
 }
@@ -169,6 +183,11 @@ opt <- validate(opt)
 #### Set up readParamObj ####
 
 
+discardGR <- GRanges()
+if (! is.null( opt$blackList )) {
+  discardGR <- rtracklayer::import(opt$blackList, "BED")
+}
+
 # For AtacSeq, want to count only ends of fragment, can
 # only do that if treat as single end reads
 readParamObj <- readParam(
@@ -177,7 +196,8 @@ readParamObj <- readParam(
     dedup = TRUE,
     minq = opt$minQual,
     forward = NA,
-    restrict = opt$chr
+    restrict = opt$chr,
+    discard = discardGR
 )
 saveRDS( readParamObj, file.path( opt$outDir, "readParam.RDS" ))
 

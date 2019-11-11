@@ -1,7 +1,5 @@
 FROM jefferys/bioconductor-reports:3.8_latest
 
-
-
 RUN R -e 'BiocManager::install( "csaw", \
     update= FALSE, \
     ask= FALSE, \
@@ -23,7 +21,7 @@ RUN R -e 'BiocManager::install( \
 )'
 
 RUN R -e 'BiocManager::install( \
-    c( "EnhancedVolcano" ), \
+    c( "EnhancedVolcano", "rtracklayer" ), \
     update= FALSE, \
     ask= FALSE, \
     version= "3.8" \
