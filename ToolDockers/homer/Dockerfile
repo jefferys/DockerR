@@ -40,15 +40,13 @@ RUN mkdir /usr/local/homer && \
     /usr/bin/curl -L "http://homer.ucsd.edu/homer/configureHomer.pl" \
                   -o "configureHomer.pl" && \
     perl configureHomer.pl -install
-    
-RUN cd "/usr/local/homer" && \
-    perl configureHomer.pl -install human-o && \
-    perl configureHomer.pl -install human-p
 
+#    chmod -R 777 /usr/local/homer
 
-ENV PATH "$PATH:/usr/local/homer/bin"
+    ENV HOMER "/usr/local/homer/"
+    ENV PATH "$PATH:$HOMER/bin"
 
-# At end as args breaks all following caching. Timestamp changesd every time...
+# At end as args breaks all following caching. Timestamp changes every time...
 
 ARG buildVersion
 ARG imageCreated
