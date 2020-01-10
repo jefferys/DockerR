@@ -21,10 +21,26 @@ RUN R -e 'BiocManager::install( \
     version= "3.8" \
 )'
 
-ADD fastPG.R SaraToyRun.R parallel_jc2.cpp  /usr/local/fastpg/
-ENV PATH "$PATH:/usr/local/fastpg"
+RUN R -e 'BiocManager::install( \
+    c( "remotes", "sararselitsky/FastPG@dev" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.8" \
+)'
 
-# At end as args breaks all following caching. Timestamp changesd every time...
+RUN /usr/bin/curl -L "https://hpc.pnl.gov/people/hala/files/grappolo.tar.gz" \
+                  -o "/usr/local/grappolo.tar.gz" && \
+    cd "/usr/local" && \
+    mkdir "grappolo-latest" && \
+    tar -zxvf "grappolo.tar.gz" -C grappolo-latest --strip-components=1 && \
+    rm "grappolo.tar.gz" && \
+    cd "grappolo-latest" && \
+    make && \
+    cp driverForGraphClustering /usr/local/bin/ && \
+    cd .. && \
+    rm -r /usr/local/grappolo-latest
+
+# At end as args breaks all following caching. Timestamp changes every time...
 
 ARG buildVersion
 ARG imageCreated
