@@ -8,7 +8,7 @@ read buildVersion < "../../VERSION"
 
 context="."
 name="bioconductor-reports"
-toolVersion="3.8"
+toolVersion="3.10"
 domain="jefferys"
 
 fullName="${domain}/${name}"
