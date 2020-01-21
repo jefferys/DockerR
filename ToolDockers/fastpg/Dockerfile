@@ -1,31 +1,27 @@
-FROM jefferys/bioconductor:3.8_latest
+FROM jefferys/bioconductor:3.10_latest
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      python \
-      python-dev \
-      python-setuptools \
-      python-pip
+      python3 \
+      python3-dev \
+      python3-igraph \
+      python3-numpy \
+      python3-pip \
+      python3-psutil \
+      python3-pybind11 \
+      python3-setuptools \
+      python3-wheel
 
-RUN pip install wheel \
- && pip install psutil \
- && pip install nmslib==2.0.5 \
-                  leidenalg \
-                  igraph
- 
+RUN pip3 install \
+            leidenalg \
+            nmslib==2.0.5
+
 RUN R -e 'BiocManager::install( \
     c( "flowCore", "data.table", "RANN", "Rcpp", "RcppParallel", \
-       "igraph", "nmslibR", "mclust", "MLmetrics" ), \
+       "igraph", "nmslibR", "mclust", "MLmetrics", "remotes" ), \
     update= FALSE, \
     ask= FALSE, \
-    version= "3.8" \
-)'
-
-RUN R -e 'BiocManager::install( \
-    c( "remotes", "sararselitsky/FastPG@dev" ), \
-    update= FALSE, \
-    ask= FALSE, \
-    version= "3.8" \
+    version= "3.10" \
 )'
 
 RUN /usr/bin/curl -L "https://hpc.pnl.gov/people/hala/files/grappolo.tar.gz" \
@@ -40,12 +36,19 @@ RUN /usr/bin/curl -L "https://hpc.pnl.gov/people/hala/files/grappolo.tar.gz" \
     cd .. && \
     rm -r /usr/local/grappolo-latest
 
+RUN R -e 'BiocManager::install( \
+    c( "sararselitsky/FastPG@dc37f518378b55a53ffe4fdbd35aab1f00e613e1" ), \
+    update= FALSE, \
+    ask= FALSE, \
+    version= "3.10" \
+)'
+
 # At end as args breaks all following caching. Timestamp changes every time...
 
 ARG buildVersion
 ARG imageCreated
 
-ARG toolVersion="0.0.1"
+ARG toolVersion="3.10"
 ARG toolSource="https://github.com/sararselitsky/FastPG/tree/dev"
 ARG tool="fastpg"
 ARG brief="${tool} - Running fastpg from a command line script"
@@ -64,7 +67,7 @@ LABEL org.opencontainers.image.title="${brief}"
 LABEL org.opencontainers.image.description="The fastpg R package, executed via a wrapper script to run as a self-executing R script, /usr/local/fastpg/fastPG.R"
 
 # https://github.com/BioContainers/specs/blob/master/container-specs.md
-LABEL base_image="jefferys/bioconductor-reports:3.8_latest"
+LABEL base_image="jefferys/bioconductor:3.10_latest"
 LABEL version="${buildVersion}"
 LABEL software.version="${toolVersion}"
 LABEL software="${tool}"
@@ -74,4 +77,6 @@ LABEL about.license="${toolLicense}"
 LABEL about.tags="debian, bioconductor, fastpg, nlmlib"
 LABEL maintainer="Stuart R. Jefferys <srj@unc.edu>"
 
-ENTRYPOINT ["bash"]
+ENV RETICULATE_PYTHON=/usr/bin/python3
+
+CMD ["bash"]

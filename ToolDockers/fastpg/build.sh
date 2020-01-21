@@ -8,7 +8,7 @@ read buildVersion < "../../VERSION"
 
 context="."
 name="fastpg"
-toolVersion="0.0.1"
+toolVersion="3.10"
 domain="jefferys"
 
 fullName="${domain}/${name}"
