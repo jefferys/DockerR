@@ -38,7 +38,7 @@ RUN R -e 'BiocManager::install( \
 #    rm -r /usr/local/grappolo-latest
 
 RUN R -e 'BiocManager::install( \
-    c( "sararselitsky/FastPG@e15174b5e7e47d3b68682b994960d47ec7a2e724" ), \
+    c( "sararselitsky/FastPG@rgrappolo" ), \
     update= FALSE, \
     ask= FALSE, \
     version= "3.10" \

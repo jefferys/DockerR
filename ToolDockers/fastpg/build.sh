@@ -14,10 +14,12 @@ domain="jefferys"
 fullName="${domain}/${name}"
 imageTag="${toolVersion}_${buildVersion}"
 
-docker build --build-arg toolVersion="${toolVersion}" \
+docker build \
+             --build-arg toolVersion="${toolVersion}" \
              --build-arg buildVersion="${buildVersion}" \
              --build-arg imageCreated="${imageCreated}" \
              -t "${fullName}:${imageTag}" \
              -t "${fullName}:${toolVersion}_latest" \
              -t "${fullName}:latest" \
+             $@ \
              "${context}"
