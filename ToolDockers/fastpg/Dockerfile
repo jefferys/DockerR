@@ -24,20 +24,21 @@ RUN R -e 'BiocManager::install( \
     version= "3.10" \
 )'
 
-RUN /usr/bin/curl -L "https://hpc.pnl.gov/people/hala/files/grappolo.tar.gz" \
-                  -o "/usr/local/grappolo.tar.gz" && \
-    cd "/usr/local" && \
-    mkdir "grappolo-latest" && \
-    tar -zxvf "grappolo.tar.gz" -C grappolo-latest --strip-components=1 && \
-    rm "grappolo.tar.gz" && \
-    cd "grappolo-latest" && \
-    make && \
-    cp driverForGraphClustering /usr/local/bin/ && \
-    cd .. && \
-    rm -r /usr/local/grappolo-latest
+# Wrapping grappolo into R code
+# RUN /usr/bin/curl -L "https://hpc.pnl.gov/people/hala/files/grappolo.tar.gz" \
+#                  -o "/usr/local/grappolo.tar.gz" && \
+#    cd "/usr/local" && \
+#    mkdir "grappolo-latest" && \
+#    tar -zxvf "grappolo.tar.gz" -C grappolo-latest --strip-components=1 && \
+#    rm "grappolo.tar.gz" && \
+#    cd "grappolo-latest" && \
+#    make && \
+#    cp driverForGraphClustering /usr/local/bin/ && \
+#    cd .. && \
+#    rm -r /usr/local/grappolo-latest
 
 RUN R -e 'BiocManager::install( \
-    c( "sararselitsky/FastPG@dc37f518378b55a53ffe4fdbd35aab1f00e613e1" ), \
+    c( "sararselitsky/FastPG@e15174b5e7e47d3b68682b994960d47ec7a2e724" ), \
     update= FALSE, \
     ask= FALSE, \
     version= "3.10" \
@@ -51,7 +52,7 @@ ARG imageCreated
 ARG toolVersion="3.10"
 ARG toolSource="https://github.com/sararselitsky/FastPG/tree/dev"
 ARG tool="fastpg"
-ARG brief="${tool} - Running fastpg from a command line script"
+ARG brief="${tool} - Container for running the R package FastPG."
 ARG toolLicense="MIT"
 
 # From https://github.com/opencontainers/image-spec/blob/master/annotations.md
@@ -64,7 +65,7 @@ LABEL org.opencontainers.image.vendor="UNC - Lineberger"
 LABEL org.opencontainers.image.licenses="${toolLicense}"
 LABEL org.opencontainers.image.ref.name="${tool}:${toolVersion}_${buildVersion}"
 LABEL org.opencontainers.image.title="${brief}"
-LABEL org.opencontainers.image.description="The fastpg R package, executed via a wrapper script to run as a self-executing R script, /usr/local/fastpg/fastPG.R"
+LABEL org.opencontainers.image.description="The fastpg R package for clustering large sample sets (millions) with intermediate features (order of 100)."
 
 # https://github.com/BioContainers/specs/blob/master/container-specs.md
 LABEL base_image="jefferys/bioconductor:3.10_latest"
